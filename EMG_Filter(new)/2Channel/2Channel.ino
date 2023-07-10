@@ -69,40 +69,91 @@ void setup()
   myFilter.init(sampleRate, humFreq, true, true, true);
   Serial.begin(115200);
 }
-
-void loop()
+void loop() // 3초 
 {
-  int data1 = analogRead(SensorInputPin1);
-  int dataAfterFilter1 = myFilter.update(data1);  // filter processing
-  int envelope1 = sq(dataAfterFilter1);   //Get envelope by squaring the input
+  if (Serial.available() > 0) {
+    int rate = 0;
+    int input = Serial.read();
+    if (input == '1') {
+      unsigned long startTime = millis(); // 현재 시간 저장
+      unsigned long elapsedTime = 0;
 
-  int data2 = analogRead(SensorInputPin2);
-  int dataAfterFilter2 = myFilter.update(data2);  // filter processing
-  int envelope2 = sq(dataAfterFilter2);   //Get envelope by squaring the input
-  envelope1 = (envelope1 > threshold) ? envelope1 : 0;    // The data set below the base value is set to 0, indicating that it is in a relaxed state
-  Serial.print(0);
-  Serial.print(" ");
-  Serial.print(10000);
-  Serial.print(" ");
-  /* if threshold=0,explain the status it is in the calibration process,the code bollow not run.
-     if get EMG singal,number++ and print
-  */
-  if (threshold > 0)
-  {
-    if (getEMGCount(envelope1))
-    {
-      EMG_num++;
-      Serial.print("EMG_num: ");
-      Serial.println(EMG_num);
+      while (elapsedTime < 3000) { // 1초 동안 루프 실행
+        
+        int data1 = analogRead(SensorInputPin1);
+        int dataAfterFilter1 = myFilter.update(data1);  // filter processing
+        int envelope1 = sq(dataAfterFilter1);   //Get envelope by squaring the input
+
+        int data2 = analogRead(SensorInputPin2);
+        int dataAfterFilter2 = myFilter.update(data2);  // filter processing
+        int envelope2 = sq(dataAfterFilter2);   //Get envelope by squaring the input
+
+        envelope1 = (envelope1 > threshold) ? envelope1 : 0;    // The data set below the base value is set to 0, indicating that it is in a relaxed state
+
+        Serial.print(rate);
+        Serial.print(" ");
+        Serial.print(elapsedTime);
+        Serial.print(" ");
+        // Serial.print(0);
+        // Serial.print(" ");
+        // Serial.print(10000);
+        // Serial.print(" ");
+
+        if (threshold > 0) {
+          if (getEMGCount(envelope1)) {
+            EMG_num++;
+            Serial.print("EMG_num: ");
+            Serial.println(EMG_num);
+          }
+        } else {
+          Serial.print(envelope1);
+          Serial.println(" ");
+          // Serial.println(envelope2);
+          rate++  ;
+        }
+
+        delayMicroseconds(5);
+        
+        elapsedTime = millis() - startTime; // 경과 시간 계산
+      }
     }
   }
-  else {
-    Serial.print(envelope1);
-    Serial.print(" ");
-    Serial.println(envelope2);
-  }
-  delayMicroseconds(50);
 }
+
+
+// void loop() // 무제한 루프
+// {
+//   int data1 = analogRead(SensorInputPin1);
+//   int dataAfterFilter1 = myFilter.update(data1);  // filter processing
+//   int envelope1 = sq(dataAfterFilter1);   //Get envelope by squaring the input
+
+//   int data2 = analogRead(SensorInputPin2);
+//   int dataAfterFilter2 = myFilter.update(data2);  // filter processing
+//   int envelope2 = sq(dataAfterFilter2);   //Get envelope by squaring the input
+//   envelope1 = (envelope1 > threshold) ? envelope1 : 0;    // The data set below the base value is set to 0, indicating that it is in a relaxed state
+//   Serial.print(0);
+//   Serial.print(" ");
+//   Serial.print(10000);
+//   Serial.print(" ");
+//   /* if threshold=0,explain the status it is in the calibration process,the code bollow not run.
+//      if get EMG singal,number++ and print
+//   */
+//   if (threshold > 0)
+//   {
+//     if (getEMGCount(envelope1))
+//     {
+//       EMG_num++;
+//       Serial.print("EMG_num: ");
+//       Serial.println(EMG_num);
+//     }
+//   }
+//   else {
+//     Serial.print(envelope1);
+//     Serial.print(" ");
+//     Serial.println(envelope2);
+//   }
+//   delayMicroseconds(50);
+// }
 
 /*
    if get EMG signal,return 1;
